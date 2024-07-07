@@ -25,14 +25,14 @@ Modern Portfolio Theory - MPT A theory on how risk-averse investors can construc
         - [x] max sharp ratio
         - [x] min volatility
         - [x] efficient frontier
-    - [ ] numerical optimize algorithms
+    - [x] numerical optimize algorithms
         - [ ] example: L-BFGS
 - To do list
     - 功能方面
         - [x] 在MonteCarlo的基础上，实现寻找efficient frontier
         - [x] 在MonteCarlo的基础上，增加函数，输入给定的std，给出最大return的组合权重
         - [x] 在MonteCarlo的基础上，增加函数，输入给定的return， 给出最小std的组合权重
-        - [ ] 当前的寻找最优组合的方式是MonteCarlo模拟，选一种数值算法实现，寻找最优回报，最优sharp ratio，最小波动等组合。以及efficient frontier
+        - [x] 当前的寻找最优组合的方式是MonteCarlo模拟，选一种数值算法实现，寻找最优回报，最优sharp ratio，最小波动等组合。以及efficient frontier
     - 可视化
         - [ ] 探索尽可能轻量级的C语言的可视化方案(为了便于跨平台)。可以参考plot.ipynb里的效果图。
     - 代码优化

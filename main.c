@@ -2,6 +2,7 @@
 #include "markowitz.h"
 #include "optimal.h"
 
+
 int main(int argc, char *argv[]) {
     if (argc < 2) {
         fprintf(stderr, "Usage: %s <csv_file_path> \n", argv[0]);
