@@ -49,7 +49,7 @@ double **monte_carlo(int num_portfolios, double *mean_returns, double **cov_matr
     return result;
 }
 
-void stochastic_gradient_descent(double *weights, double *mean_returns, double **cov_matrix, int num_assets, double (*objective_function)(double *, double *, double **, int)) {
+void stochastic_gradient_descent(double *weights, double *mean_returns, double **cov_matrix, int num_assets, double (*objective_function)(double *, double *, double **, int),int max_or_min) {
     double *gradient = (double *)calloc(num_assets, sizeof(double));
     
     for (int iter = 0; iter < MAX_ITERATIONS; iter++) {
@@ -74,7 +74,10 @@ void stochastic_gradient_descent(double *weights, double *mean_returns, double *
         // Update weights using the gradient
         double sum = 0.0;
         for (int i = 0; i < num_assets; i++) {
-            weights[i] += LEARNING_RATE * gradient[i];
+            if(max_or_min == 1)
+                weights[i] += LEARNING_RATE * gradient[i];
+            else
+                weights[i] -= LEARNING_RATE * gradient[i];
             if (weights[i] < 0) weights[i] = 0; // Ensure weights are non-negative
             sum += weights[i];
         }
@@ -94,7 +97,7 @@ void stochastic_gradient_descent(double *weights, double *mean_returns, double *
     free(gradient);
 }
 
-double **numerical_optimization(int num_portfolios, double *mean_returns, double **cov_matrix, int num_assets, double (*objective_function)(double *, double *, double **, int)) {
+double **numerical_optimization(int num_portfolios, double *mean_returns, double **cov_matrix, int num_assets, double (*objective_function)(double *, double *, double **, int),int max_or_min) {
     double **result = (double **)malloc(num_portfolios * sizeof(double *));
     for (int i = 0; i < num_portfolios; i++) {
         result[i] = (double *)calloc(num_assets + NUM_COLS, sizeof(double));
@@ -119,7 +122,7 @@ double **numerical_optimization(int num_portfolios, double *mean_returns, double
         }
 
         // Optimize the weights using stochastic gradient descent
-        stochastic_gradient_descent(weights, mean_returns, cov_matrix, num_assets, objective_function);
+        stochastic_gradient_descent(weights, mean_returns, cov_matrix, num_assets, objective_function, max_or_min);
 
         for (int j = 0; j < num_assets; j++) {
             result[i][j] = weights[j];

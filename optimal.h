@@ -16,8 +16,8 @@ typedef struct {
 
 // 函数声明
 double **monte_carlo(int num_portfolios, double *mean_returns, double **cov_matrix, int num_assets);
-void stochastic_gradient_descent(double *weights, double *mean_returns, double **cov_matrix, int num_assets, double (*objective_function)(double *, double *, double **, int));
-double **numerical_optimization(int num_portfolios, double *mean_returns, double **cov_matrix, int num_assets, double (*objective_function)(double *, double *, double **, int));
+void stochastic_gradient_descent(double *weights, double *mean_returns, double **cov_matrix, int num_assets, double (*objective_function)(double *, double *, double **, int),int max_or_min);
+double **numerical_optimization(int num_portfolios, double *mean_returns, double **cov_matrix, int num_assets, double (*objective_function)(double *, double *, double **, int),int max_or_min);
 double calculate_portfolio_return(double *weights, double *mean_returns, double **cov_matrix, int num_assets);
 double calculate_portfolio_std(double *weights, double *mean_returns, double **cov_matrix, int num_assets);
 double calculate_sharpe_ratio(double *weights, double *mean_returns, double **cov_matrix, int num_assets);
