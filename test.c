@@ -13,6 +13,8 @@ int main(int argc, char *argv[]) {
 
     CSVData *csv_data = read_csv(filepath);
 
+    int num_assets = csv_data->cols;
+
     // 计算收益率
     double **returns = calculate_returns(csv_data->data, csv_data->rows, csv_data->cols);
 
@@ -22,66 +24,45 @@ int main(int argc, char *argv[]) {
     // 计算协方差矩阵
     double **cov_matrix = calculate_covariance_matrix(returns, csv_data->rows, csv_data->cols);
 
-    double **result_max_return = numerical_optimization(num_simulations, mean_returns, cov_matrix, csv_data->cols,calculate_portfolio_return,1);
+    double **result = numerical_optimization(num_simulations, mean_returns, cov_matrix, csv_data->cols,calculate_portfolio_return,1);
     double **result_min_std = numerical_optimization(num_simulations, mean_returns, cov_matrix, csv_data->cols,calculate_portfolio_std,0);
     double **result_max_sharp = numerical_optimization(num_simulations, mean_returns, cov_matrix, csv_data->cols,calculate_sharpe_ratio,1);
-
-    double target_std = 0.20;
-    double target_return = 0.50;
-
-    /// 打印最大回报结果
-    printf("最大回报结果:\n");
-    for (int i = 0; i < csv_data->cols; i++) {
-        printf("%s, ", csv_data->colnames[i+1]);
-    }
-    printf("return, volatility, sharp ratio, \n");
+    
+    // 定义一个结构体来存储投资组合的性能指标
+    Portfolio *portfolios = (Portfolio *)malloc(num_simulations * sizeof(Portfolio));
     for (int i = 0; i < num_simulations; i++) {
-        for (int j = 0; j < csv_data->cols + NUM_COLS; j++) {
-            printf("%f, ", result_max_return[i][j]);
+        portfolios[i].return_value = result[i][num_assets];
+        portfolios[i].std = result[i][num_assets + 1];
+        portfolios[i].sharpe_ratio = result[i][num_assets + 2];
+        portfolios[i].weights = (double*)malloc((num_assets + NUM_COLS) * sizeof(double));
+        for(int j = 0; j < num_assets + NUM_COLS; j++) {
+            portfolios[i].weights[j] = result[i][j];
         }
-        printf("\n");
     }
 
-    find_max_return_for_std(result_max_return, num_simulations, csv_data->cols, target_std);
-    find_min_std_for_return(result_max_return, num_simulations, csv_data->cols, target_return);
+    FILE *file = fopen("/Users/juice/Desktop/coding/markowitz-c-master/data/output.csv", "w");
+    if (!file) {
+        perror("Unable to open file");
+        return 0;
+    }
 
-    double **efficient_frontier_for_max_return = find_efficient_frontier(result_max_return, num_simulations, csv_data->cols);
-
-    // 打印最小标准差结果
-    printf("最小标准差结果:\n");
+    // 写入标题行
     for (int i = 0; i < csv_data->cols; i++) {
-        printf("%s, ", csv_data->colnames[i+1]);
+        fprintf(file,"%s, ", csv_data->colnames[i+1]);  
     }
-    printf("return, volatility, sharp ratio, \n");
+    fprintf(file, "Return,Std,Sharpe Ratio\n");
+
+    // 遍历portfolios数组并写入数据
     for (int i = 0; i < num_simulations; i++) {
-        for (int j = 0; j < csv_data->cols + NUM_COLS; j++) {
-            printf("%f, ", result_min_std[i][j]);
+        for (int j = 0; j < num_assets; j++) {
+            fprintf(file, "%f,", portfolios[i].weights[j]);
         }
-        printf("\n");
+        fprintf(file, "%f,%f,%f", portfolios[i].return_value, portfolios[i].std, portfolios[i].sharpe_ratio);
+        fprintf(file, "\n");
     }
+    
+    fclose(file);
 
-    find_max_return_for_std(result_min_std, num_simulations, csv_data->cols, target_std);
-    find_min_std_for_return(result_min_std, num_simulations, csv_data->cols, target_return);
-
-    double **efficient_frontier_for_min_std = find_efficient_frontier(result_min_std, num_simulations, csv_data->cols);
-
-    // 打印最大夏普比率结果
-    printf("最大夏普比率结果:\n");
-    for (int i = 0; i < csv_data->cols; i++) {
-        printf("%s, ", csv_data->colnames[i+1]);
-    }
-    printf("return, volatility, sharp ratio, \n");
-    for (int i = 0; i < num_simulations; i++) {
-        for (int j = 0; j < csv_data->cols + NUM_COLS; j++) {
-            printf("%f, ", result_max_sharp[i][j]);
-        }
-        printf("\n");
-    }
-
-    find_max_return_for_std(result_max_sharp, num_simulations, csv_data->cols, target_std);
-    find_min_std_for_return(result_max_sharp, num_simulations, csv_data->cols, target_return);
-
-    double **efficient_frontier_for_max_sharp = find_efficient_frontier(result_max_sharp, num_simulations, csv_data->cols);
 
     // 释放内存
     // *mean_returns
@@ -100,14 +81,41 @@ int main(int argc, char *argv[]) {
     free_csv_data(csv_data);
 
     // **result
-    for (int i = 0; i < num_simulations; i++) {
-        free(result_min_std[i]);
-        free(result_max_return[i]);
-        free(result_max_sharp[i]);
+    for (int i = 0; i < num_simulations; i++) {   
+        free(result[i]);
     }
-    free(result_min_std);
-    free(result_max_return);
-    free(result_max_sharp);
 
+    free(result);
     return 0;
 }
+
+Portfolio *find_efficient_frontier(Portfolio *portfolios, int num_portfolios, int num_assets) {
+    
+    // 按风险（标准差）升序排序
+    qsort(portfolios, num_portfolios, sizeof(Portfolio), compare_by_sharpe_std);
+    Portfolio *efficient_frontier = (Portfolio *)malloc(num_portfolios * sizeof(Portfolio));
+    int ef_index = 0;
+    double max_return = -INFINITY;
+
+    for (int i = 0; i < num_portfolios; i++) {
+        double portfolio_return = portfolios[i].return_value;
+        if (portfolio_return > max_return) {
+            efficient_frontier[ef_index].return_value = portfolio_return;
+            efficient_frontier[ef_index].std = portfolios[i].std;
+            efficient_frontier[ef_index].sharpe_ratio = portfolios[i].sharpe_ratio;
+            efficient_frontier[ef_index].weights = (double *)malloc((num_assets + NUM_COLS) * sizeof(double));
+            for (int j = 0; j < num_assets + NUM_COLS; j++) {
+                efficient_frontier[ef_index].weights[j] = portfolios[i].weights[j];
+            }
+            ef_index++;
+            max_return = portfolio_return;
+        }
+    }
+
+    // 根据ef_index更新efficient_frontier的大小
+    efficient_frontier = (Portfolio *)realloc(efficient_frontier, ef_index * sizeof(Portfolio));
+
+    return efficient_frontier;
+}
+// 根据ef_index更新efficient_frontier的大小
+    efficient_frontier = (Portfolio *)realloc(efficient_frontier, ef_index * sizeof(Portfolio));

@@ -24,6 +24,6 @@ double calculate_sharpe_ratio(double *weights, double *mean_returns, double **co
 void find_max_return_for_std(double **result, int num_portfolios, int num_assets, double target_std);
 void find_min_std_for_return(double **result, int num_portfolios, int num_assets, double target_return);
 int compare_by_sharpe_std(const void *a, const void *b);
-double **find_efficient_frontier(double **result, int num_portfolios, int num_assets);
+Portfolio *find_efficient_frontier(Portfolio *portfolios, int num_portfolios, int num_assets, int *ef_size);
 
 #endif // OPTIMAL_H

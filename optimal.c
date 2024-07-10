@@ -182,44 +182,32 @@ int compare_by_sharpe_std(const void *a, const void *b) {
     return (portfolioA->std > portfolioB->std) - (portfolioA->std < portfolioB->std);
 }
 
-double **find_efficient_frontier(double **result, int num_portfolios, int num_assets) {
-    Portfolio *portfolios = (Portfolio *)malloc(num_portfolios * sizeof(Portfolio));
-    ;
-    for (int i = 0; i < num_portfolios; i++) {
-        portfolios[i].return_value = result[i][num_assets];
-        portfolios[i].std = result[i][num_assets + 1];
-        portfolios[i].sharpe_ratio = result[i][num_assets + 2];
-        portfolios[i].weights = (double*)malloc((num_assets + NUM_COLS) * sizeof(double));
-        for(int j = 0; j < num_assets + NUM_COLS; j++) {
-            portfolios[i].weights[j] = result[i][j];
-        }
-    }
+Portfolio *find_efficient_frontier(Portfolio *portfolios, int num_portfolios, int num_assets, int *ef_size) {
     
     // 按风险（标准差）升序排序
     qsort(portfolios, num_portfolios, sizeof(Portfolio), compare_by_sharpe_std);
-    double **efficient_frontier = (double **)malloc(num_portfolios * sizeof(double *));
-    for (int i = 0; i < num_portfolios; i++) {
-        efficient_frontier[i] = (double *)calloc(num_assets + NUM_COLS, sizeof(double));
-    }
+    Portfolio *efficient_frontier = (Portfolio *)malloc(num_portfolios * sizeof(Portfolio));
     int ef_index = 0;
     double max_return = -INFINITY;
 
     for (int i = 0; i < num_portfolios; i++) {
         double portfolio_return = portfolios[i].return_value;
         if (portfolio_return > max_return) {
-            for(int j = 0; j < num_assets + NUM_COLS; j++) {
-                efficient_frontier[ef_index][j] = portfolios[i].weights[j];
+            efficient_frontier[ef_index].return_value = portfolio_return;
+            efficient_frontier[ef_index].std = portfolios[i].std;
+            efficient_frontier[ef_index].sharpe_ratio = portfolios[i].sharpe_ratio;
+            efficient_frontier[ef_index].weights = (double *)malloc((num_assets + NUM_COLS) * sizeof(double));
+            for (int j = 0; j < num_assets + NUM_COLS; j++) {
+                efficient_frontier[ef_index].weights[j] = portfolios[i].weights[j];
             }
             ef_index++;
             max_return = portfolio_return;
         }
     }
+    // 更新efficient_frontier的大小
+    efficient_frontier = (Portfolio *)realloc(efficient_frontier, ef_index * sizeof(Portfolio));
 
-    for (int i = 0; i < ef_index; i++) {
-        for (int j = 0; j < num_assets + NUM_COLS; j++) {
-            printf("%f, ", efficient_frontier[i][j]);
-        }
-        printf("\n");
-    }
+    *ef_size = ef_index;
+    
     return efficient_frontier;
 }

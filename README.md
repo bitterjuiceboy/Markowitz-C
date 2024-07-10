@@ -37,8 +37,8 @@ Modern Portfolio Theory - MPT A theory on how risk-averse investors can construc
         - [ ] 探索尽可能轻量级的C语言的可视化方案(为了便于跨平台)。可以参考plot.ipynb里的效果图。
     - 代码优化
         - 当前demo的输出是通过printf函数输出到terminal的csv形式，通过 ./build/main path num_simulations > result.txt的形式输出到文件。比较简陋。可以做的优化点如下：
-        - [ ] 设计数据结构来存储result。更方便通过排序等方式寻找efficient frontier、maximum sharp ratio和输出到文件。
-        - [ ] 实现写csv文件。
+        - [x] 设计数据结构来存储result。更方便通过排序等方式寻找efficient frontier、maximum sharp ratio和输出到文件。
+        - [x] 实现写csv文件。
         - [ ] 其他的可以优化的点也随时欢迎提出来。
 
 #### Software Architecture
